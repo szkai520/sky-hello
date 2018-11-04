@@ -10,6 +10,8 @@ g_crawl_list = []
 # 用来存放解析线程
 g_parser_list = []
 
+g_flag = True
+
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36',
 }
@@ -52,9 +54,9 @@ class ParserThread(threading.Thread):
     def run(self):
         print("%s-----解析线程开始" % self.name)
         while True:
-            # # 判断解析线程何时推出
-            # if self.data_queue.empty():
-            #     break
+            # 判断解析线程何时推出
+            if g_flag == False:
+                break
             # 从data_queue中取出一页数据
             try:
                 data = self.data_queue.get(True, 5)
@@ -129,12 +131,22 @@ def main():
     time.sleep(3)
     # 创建解析线程
     create_parser_thread(data_queue, fp, lock)
+
     # 启动所有采集线程
     for tcrawl in g_crawl_list:
         tcrawl.start()
     # 启动所有解析线程
     for tparser in g_parser_list:
         tparser.start()
+
+    while True:
+        if page_queue.empty():
+            break
+    while True:
+        if data_queue.empty():
+            global g_flag
+            g_flag = False
+            break
 
     # 主线程等待子线程结束
     for tcrawl in g_crawl_list:
